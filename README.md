@@ -5,8 +5,6 @@ Control your mouse with your hands.
 Utilizes the Azure Kinect Camera to track your Dominant hand and moves the mouse according to the position of your wrist
 
 ### TODO:
-- Calculate against origin for mouse movement
-- Move the mouse with the given cords
 - Support left and right dominant hands
 - UI
 - Optimization
@@ -20,6 +18,7 @@ Utilizes the Azure Kinect Camera to track your Dominant hand and moves the mouse
 - Camera configuration
 - Code refactoring
 - Framework laid
+- hand tracking + update the mouse with position of the hand
 
 
 ### minimum specs:

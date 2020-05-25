@@ -10,8 +10,7 @@ class detect
 {
 public:
     void UpdateData(k4abt_body_t selectedBody, uint64_t currentTimestampUsec);
-	void moveMouse(float cords);
-	float calcAgainstOrigin();
+	void moveMouse(int x, int y);
 
     bool LeftHandRaised() 
 	{ 
@@ -19,9 +18,13 @@ public:
 	}
 
 private:
-	//origin set to 0,0 by default
-	float m_origin[2] = {0,0};
 
+	//origin set to 0,0 by default
+	float m_origin[2] = { 0.0, 0.0};
+	int vert_offset = 0;
+	int hor_offset = 0;
+	float multiplyer = 2;
+	float previousPosition[2] = { 0.0,0.0 };
     bool m_leftHandRaised = false;
     std::chrono::microseconds m_handRaisedTimeSpan = std::chrono::microseconds::zero();
     std::chrono::microseconds m_previousTimestamp = std::chrono::microseconds::zero();

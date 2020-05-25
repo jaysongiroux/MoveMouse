@@ -19,9 +19,31 @@
 // Global State and Key Process Function
 bool s_isRunning = true;
 
+int * getDestopSize()
+{
+	RECT desktop;
+	const HWND hDesktop = GetDesktopWindow();
+	GetWindowRect(hDesktop, &desktop);
+	int size[] = { desktop.right, desktop.bottom };
+	return size;
+}
+
+
+void printIns()
+{
+	printf("To lock on put your dominant hand in the top left most you can reach\n");
+	printf("NOTICE, You will not be able to move your dominant hand more left once this origin is set, unless you reset the origin using the trigger gesture\n");
+	printf("to lock that origin, raise your other hand above your head. tracking will begin after that\n");
+	printf("to stop tracking, riase your hand above your head agin\n");
+}
 
 int main()
 {
+	printIns();
+
+	//getting screen size
+	int* size = getDestopSize();
+	std::cout << "Width: " << size[0] << " Height: " << size[1] << std::endl;
 
     k4a_device_t device = nullptr;
     VERIFY(k4a_device_open(0, &device), "Open K4A Device failed!");
@@ -56,13 +78,17 @@ int main()
     
 	detect Detect;
 	
+	//move the mouse to the origin before the while true loop
+	SetCursorPos(0, 0);
+
+
 	//while true loop
     while (s_isRunning)
     {
         k4a_capture_t sensorCapture = nullptr;
         k4a_wait_result_t getCaptureResult = k4a_device_get_capture(device, &sensorCapture, 0); // timeout_in_ms is set to 0
 
-
+		//needed
         if (getCaptureResult == K4A_WAIT_RESULT_SUCCEEDED)
         {
             // timeout_in_ms is set to 0. Return immediately no matter whether the sensorCapture is successfully added
@@ -71,20 +97,7 @@ int main()
 
             // Release the sensor capture once it is no longer needed.
             k4a_capture_release(sensorCapture);
-
-            if (queueCaptureResult == K4A_WAIT_RESULT_FAILED)
-            {
-                std::cout << "Error! Add capture to tracker process queue failed!" << std::endl;
-                break;
-            }
         }
-
-        else if (getCaptureResult != K4A_WAIT_RESULT_TIMEOUT)
-        {
-            std::cout << "Get depth capture returned error: " << getCaptureResult << std::endl;
-            break;
-        }
-
 
         // Pop Result from Body Tracker
         k4abt_frame_t bodyFrame = nullptr;
@@ -98,15 +111,16 @@ int main()
             k4a_capture_t originalCapture = k4abt_frame_get_capture(bodyFrame);
 
 		
-			//track the first body: todo: change this to a better implementation
+			//track the first body: 
+			//todo: change this to a better implementation
             const size_t JumpEvaluationBodyIndex = 0;
             if (k4abt_frame_get_num_bodies(bodyFrame) > 0)
             {
                 k4abt_body_t body;
-                VERIFY(k4abt_frame_get_body_skeleton(bodyFrame, JumpEvaluationBodyIndex, &body.skeleton), "Get skeleton from body frame failed!");
-                body.id = k4abt_frame_get_body_id(bodyFrame, JumpEvaluationBodyIndex);
+                VERIFY(k4abt_frame_get_body_skeleton(bodyFrame, 0, &body.skeleton), "Get skeleton from body frame failed!");
+                body.id = k4abt_frame_get_body_id(bodyFrame, 0);
 
-                uint64_t timestampUsec = k4abt_frame_get_device_timestamp_usec(bodyFrame);
+	            uint64_t timestampUsec = k4abt_frame_get_device_timestamp_usec(bodyFrame);
 				Detect.UpdateData(body, timestampUsec);
             }
 
@@ -116,6 +130,7 @@ int main()
             uint32_t numBodies = k4abt_frame_get_num_bodies(bodyFrame);
 
 			//goes through the number of bodies in the tracking data to be displayed
+			//todo: investigate if this is needed
             for (uint32_t i = 0; i < numBodies; i++)
             {
                 k4abt_body_t body;
@@ -128,14 +143,15 @@ int main()
                 window3d.AddBody(body, color);
             }//end for
 
+
 			// Visualize point cloud
 			//todo: make this optional
-			k4a_image_t depthImage = k4a_capture_get_depth_image(originalCapture);
-			window3d.UpdatePointClouds(depthImage);
+			//k4a_image_t depthImage = k4a_capture_get_depth_image(originalCapture);
+			//window3d.UpdatePointClouds(depthImage);
 
 			//releasing the capture before the next points are displayed
             k4a_capture_release(originalCapture);
-            k4a_image_release(depthImage);
+            //k4a_image_release(depthImage);
             k4abt_frame_release(bodyFrame);
 
         } //end if
