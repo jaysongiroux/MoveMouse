@@ -11,22 +11,40 @@ class detect
 public:
     void UpdateData(k4abt_body_t selectedBody, uint64_t currentTimestampUsec);
 	void moveMouse(int x, int y);
-
+	void calibrate();
     bool LeftHandRaised() 
 	{ 
 		return m_leftHandRaised;
 	}
 
 private:
+	//left, right, top, down
+	int calibration[4] = {0,0,0,0};
+	bool isLeftCalibrated = false;
+	bool isRightCalibrated = false;
+	bool isTopCalibrated = false;
+	bool isDownCalibrated = false;
+	bool inCalibration = true;
+	bool isAllCalibrated = false;
 
-	//origin set to 0,0 by default
-	float m_origin[2] = { 0.0, 0.0};
-	int vert_offset = 0;
-	int hor_offset = 0;
+	//not tracking and not calibrating
+	bool inDormant = true;
+
+	int vert_scaler = 0;
+	int hor_scaler = 0;
 	float multiplyer = 2;
 	float previousPosition[2] = { 0.0,0.0 };
     bool m_leftHandRaised = false;
+	bool m_bothHandsUp = false;
+
+
+	//calibrate
     std::chrono::microseconds m_handRaisedTimeSpan = std::chrono::microseconds::zero();
     std::chrono::microseconds m_previousTimestamp = std::chrono::microseconds::zero();
-    const std::chrono::seconds m_stableTime = std::chrono::seconds(2);
+    const std::chrono::seconds m_stableTime = std::chrono::seconds(1);
+
+	//start stop tracking
+	std::chrono::microseconds m_BHUtimeSpan = std::chrono::microseconds::zero();
+	std::chrono::microseconds m_previousTimestampBHU = std::chrono::microseconds::zero();
+	const std::chrono::seconds m_stableTimeBHU = std::chrono::seconds(1);
 };

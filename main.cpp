@@ -19,16 +19,6 @@
 // Global State and Key Process Function
 bool s_isRunning = true;
 
-int * getDestopSize()
-{
-	RECT desktop;
-	const HWND hDesktop = GetDesktopWindow();
-	GetWindowRect(hDesktop, &desktop);
-	int size[] = { desktop.right, desktop.bottom };
-	return size;
-}
-
-
 void printIns()
 {
 	printf("To lock on put your dominant hand in the top left most you can reach\n");
@@ -37,13 +27,10 @@ void printIns()
 	printf("to stop tracking, riase your hand above your head agin\n");
 }
 
+
 int main()
 {
 	printIns();
-
-	//getting screen size
-	int* size = getDestopSize();
-	std::cout << "Width: " << size[0] << " Height: " << size[1] << std::endl;
 
     k4a_device_t device = nullptr;
     VERIFY(k4a_device_open(0, &device), "Open K4A Device failed!");
@@ -60,15 +47,19 @@ int main()
 
     // Get calibration information
     k4a_calibration_t sensorCalibration;
-    VERIFY(k4a_device_get_calibration(device, deviceConfig.depth_mode, deviceConfig.color_resolution, &sensorCalibration),
-        "Get depth camera calibration failed!");
-
+	k4a_result_t cal = k4a_device_get_calibration(device, deviceConfig.depth_mode, deviceConfig.color_resolution, &sensorCalibration);
+    VERIFY(cal, "Get depth camera calibration failed!");
 
 
     // Create Body Tracker
     k4abt_tracker_t tracker = nullptr;
     k4abt_tracker_configuration_t tracker_config = K4ABT_TRACKER_CONFIG_DEFAULT;
-    VERIFY(k4abt_tracker_create(&sensorCalibration, tracker_config, &tracker), "Body tracker initialization failed!");
+
+	//tracker config: oritentation, processing mode, GPU ID
+	k4a_result_t created_tracker = k4abt_tracker_create(&sensorCalibration, tracker_config, &tracker);
+	
+
+    VERIFY(created_tracker, "Body tracker initialization failed!");
 
 
 
@@ -83,8 +74,11 @@ int main()
 
 
 	//while true loop
+	printf("CALIBRATION MODE ACTIVE: \n");
+	printf("CALIBRATE LEFT\n");
     while (s_isRunning)
     {
+		/*k4abt_tracker_*/
         k4a_capture_t sensorCapture = nullptr;
         k4a_wait_result_t getCaptureResult = k4a_device_get_capture(device, &sensorCapture, 0); // timeout_in_ms is set to 0
 
@@ -113,7 +107,6 @@ int main()
 		
 			//track the first body: 
 			//todo: change this to a better implementation
-            const size_t JumpEvaluationBodyIndex = 0;
             if (k4abt_frame_get_num_bodies(bodyFrame) > 0)
             {
                 k4abt_body_t body;
@@ -126,7 +119,7 @@ int main()
 
 			
             // Visualize the skeleton data
-            window3d.CleanJointsAndBones();
+            window3d.CleanJointsAndBones(); //clears previous skel data
             uint32_t numBodies = k4abt_frame_get_num_bodies(bodyFrame);
 
 			//goes through the number of bodies in the tracking data to be displayed
@@ -138,7 +131,7 @@ int main()
                 body.id = k4abt_frame_get_body_id(bodyFrame, i);
 
                 Color color = g_bodyColors[body.id % g_bodyColors.size()];
-                color.a = i == JumpEvaluationBodyIndex ? 0.8f : 0.1f;
+                color.a = i == 0 ? 0.8f : 0.1f;
 
                 window3d.AddBody(body, color);
             }//end for

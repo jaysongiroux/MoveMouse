@@ -12,14 +12,18 @@ Utilizes the Azure Kinect Camera to track your Dominant hand and moves the mouse
 - Installation information for this project
 - how to manage clicking, dragging, scrolling etc
 
-
 ### Done:
 - Gesture recognition to determine origin
 - Camera configuration
 - Code refactoring
 - Framework laid
 - hand tracking + update the mouse with position of the hand
-
+- reduce jitter - set to 1/1 instead of 0/1 FLOAT
+- syncing & calibrating
+	max left
+	max right
+	max up
+	max down
 
 ### minimum specs:
 Note: these specs are according to microsoft's documentation. This will be revisited when point cloud enveloping is implemented along with other optimizations 
