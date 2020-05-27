@@ -10,8 +10,7 @@ class detect
 {
 public:
     void UpdateData(k4abt_body_t selectedBody, uint64_t currentTimestampUsec);
-	void moveMouse(int x, int y);
-	void calibrate();
+	void moveMouse(float x, float y);
     bool LeftHandRaised() 
 	{ 
 		return m_leftHandRaised;
@@ -19,7 +18,8 @@ public:
 
 private:
 	//left, right, top, down
-	int calibration[4] = {0,0,0,0};
+	float calibration[4] = {0,0,0,0};
+	float pervious_values[2] = { 0.0, 0.0};
 	bool isLeftCalibrated = false;
 	bool isRightCalibrated = false;
 	bool isTopCalibrated = false;
@@ -33,7 +33,6 @@ private:
 	int vert_scaler = 0;
 	int hor_scaler = 0;
 	float multiplyer = 2;
-	float previousPosition[2] = { 0.0,0.0 };
     bool m_leftHandRaised = false;
 	bool m_bothHandsUp = false;
 

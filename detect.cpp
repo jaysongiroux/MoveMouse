@@ -21,41 +21,38 @@ int* getDestopSize()
 //mouse the mouse after the user declares where the origin is
 //moves the mouse smoother
 //todo this needs a lot of work
-void detect::moveMouse(int x, int y)
+void detect::moveMouse(float x, float y)
 {
-	x = abs(x * multiplyer);
-	y = abs(y * multiplyer);
-	int interations = 5; 
-	for (int i = 0; i<interations; i++)
-	{
-		//this math is very wrong fix this
-		int point_Next_X = abs(previousPosition[0] - x / interations);
-		int point_Next_Y = abs(previousPosition[1] - y/ interations);
-		
-		if ( i = interations)
-		{
-			SetCursorPos(x, y);
-		}
-		else
-		{
-			SetCursorPos(point_Next_X, point_Next_Y);
-		}
-		Sleep(10);
-	}
+	//std::cout << "previous value: " << pervious_values[0] << std::endl;
+	//std::cout << "Current Value: " << x << std::endl;
+	//std::cout << "X: " << abs(pervious_values[0] - x) << " Y: " << abs(pervious_values[1] - y) << std::endl;
+	//if difference is too small
 
-}
+	SetCursorPos(x*hor_scaler, y*vert_scaler);
+	//if (abs(pervious_values[0] - x) < 5 && abs(pervious_values[1] - y) < 5)
+	//{
+	//	SetCursorPos(x, y);
+	//}
+	//else
+	//{
+	//	SetCursorPos(x, y);
+	//	int interations = 5;
+	//	for (int i = 0; i < interations; i++)
+	//	{
+	//		//this math is very wrong fix this
+	//		//x1 start point
+	//		//x2 end point 
+	//		int xSet = (pervious_values[0]) + i * ((x) - (pervious_values[0]));
+	//		int ySet = (pervious_values[1]) + i * ((y) - (pervious_values[1]));
 
+	//		//std::cout << "X: " << xSet << " Y: " << ySet << std::endl;
+	//		SetCursorPos(abs(xSet), abs(ySet));
+	//		Sleep(1);
+	//	}
 
-int opp(int a)
-{
-	if (a <= 0)
-	{
-		return 0 - a;
-	}
-	else
-	{
-		return abs(a);
-	}
+	//}
+
+	
 }
 
 
@@ -69,12 +66,19 @@ void detect::UpdateData(k4abt_body_t selectedBody, uint64_t currentTimestampUsec
     
 	// bool set to true when the gestiure is performed
 	//todo: dominant hand 
+	bool leftHandRaised;
+	//left higher than head, right lower than head
 
-	// calibrate
-	bool leftHandRaised = leftWristJoint.xyz.y < headJoint.xyz.y;
+	if (isTopCalibrated)
+	{
+		leftHandRaised = leftWristJoint.xyz.y < headJoint.xyz.y && rightWristJoint.xyz.y > headJoint.xyz.y;
+	}
+	else
+	{
+		leftHandRaised = leftWristJoint.xyz.y < headJoint.xyz.y;
+	}
 
-	//toggle start and stop
-	bool bothHandsUp = leftHandRaised && rightWristJoint.xyz.y < headJoint.xyz.y;
+	bool bothHandsUp = leftWristJoint.xyz.y < headJoint.xyz.y && rightWristJoint.xyz.y < headJoint.xyz.y;
 
 	// exmaple how to print float: 
 	//printf("%9.6f\n", leftWristJoint.xyz.x);
@@ -89,17 +93,6 @@ void detect::UpdateData(k4abt_body_t selectedBody, uint64_t currentTimestampUsec
 	//might need in order to calculate the circle around the person if designed for vr
 	//z: not used --> depth
 
-
-
-	//tracking statement: 
-	if (isAllCalibrated == true && inCalibration == false && inDormant == false)
-	{
-		//hand tracking starts here
-		//x,y 
-		//moveMouse(rightWristJoint.xyz.x, rightWristJoint.xyz.y); //moves the mouse every iteration
-		printf("RUNNING\n");
-		bothHandsUp = false;
-	}
 
 	microseconds currentTimestamp(currentTimestampUsec);
 	if (m_previousTimestamp == microseconds::zero())
@@ -183,36 +176,64 @@ void detect::UpdateData(k4abt_body_t selectedBody, uint64_t currentTimestampUsec
 
 	//when gesture is performed after calibration sequence
 	//start seq if statement
-	if (!m_bothHandsUp && bothHandsUp && isAllCalibrated && inCalibration)
+	if (!m_leftHandRaised && leftHandRaised && isAllCalibrated && inCalibration)
 	{
-		m_BHUtimeSpan += currentTimestamp - m_previousTimestampBHU;
-		if (m_BHUtimeSpan > m_stableTimeBHU)
+		m_handRaisedTimeSpan += currentTimestamp - m_previousTimestamp;
+		if (m_handRaisedTimeSpan > m_stableTime)
 		{
 			//start tracking the right hand to control the mouse
-			printf("BOTH HANDS RAISED, BEGINNING TRACKING TO LINK TO THE MOUSE...\n");
-			inDormant = false; //tracking...
+			printf("LEFT HAND RAISED, BEGINNING TRACKING TO LINK TO THE MOUSE...\n");
+			inDormant = false; //start tracking tracking...
 			inCalibration = false;
-			m_bothHandsUp = false;
+			m_leftHandRaised = leftHandRaised;
 		}
+	}
+
+
+
+	
+	//tracking statement
+	if (isAllCalibrated == true && inCalibration == false && inDormant == false)
+	{
+
+		//hand tracking starts here
+		//x,y 
+		moveMouse(abs(rightWristJoint.xyz.x), abs(rightWristJoint.xyz.y)); //moves the mouse every iteration
+		//printf("RUNNING\n");
+		pervious_values[0] = abs(rightWristJoint.xyz.x);
+		pervious_values[1] = abs(rightWristJoint.xyz.y);
+
+		//if currently tracking and if both hands are raised
+		if (bothHandsUp)
+		{
+			m_BHUtimeSpan += currentTimestamp - m_previousTimestampBHU;
+			if (m_BHUtimeSpan > m_stableTimeBHU)
+			{
+				//start tracking the right hand to control the mouse
+				printf("STOPING\n");
+				inDormant = true; //tracking...
+				m_bothHandsUp = bothHandsUp;
+			}
+		}
+
+		else if (!bothHandsUp)
+		{
+			m_bothHandsUp = false;
+			m_previousTimestampBHU = microseconds::zero();
+			m_BHUtimeSpan = microseconds::zero();
+		}
+
+
+
+
 	}
 
 	//stop running 
 	//todo: having issues here. stops tracking immediatly after starting to track
-	if (bothHandsUp && !inDormant)
-	{
-		m_BHUtimeSpan += currentTimestamp - m_previousTimestampBHU;
-		if (m_BHUtimeSpan > m_stableTimeBHU)
-		{
-			//start tracking the right hand to control the mouse
-			printf("STOPING\n");
-			inDormant = true; //tracking...
-			m_bothHandsUp = bothHandsUp;
-		}
-	}
+	//indorment = false meaning it is currently tracking
 
 
 ///////////////////////////////////////////////////////////////
-
 
 	else if (!leftHandRaised)
 	{

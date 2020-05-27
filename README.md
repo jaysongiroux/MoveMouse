@@ -5,12 +5,13 @@ Control your mouse with your hands.
 Utilizes the Azure Kinect Camera to track your Dominant hand and moves the mouse according to the position of your wrist
 
 ### TODO:
-- Support left and right dominant hands
+- Support left and right dominant hands --> most likely different files, until a customizable UI is implemented
 - UI
 - Optimization
 - Installer
 - Installation information for this project
 - how to manage clicking, dragging, scrolling etc
+- Jitter control -> temporal smoothing is maxed out and there is still too much jitter. will look into this further
 
 ### Done:
 - Gesture recognition to determine origin
@@ -24,6 +25,9 @@ Utilizes the Azure Kinect Camera to track your Dominant hand and moves the mouse
 	max right
 	max up
 	max down
+	
+ - calibration K value --> integration of calibration data into the movement of the mouse
+ - tracking bugs --> both hands up to stop, left hand up to start
 
 ### minimum specs:
 Note: these specs are according to microsoft's documentation. This will be revisited when point cloud enveloping is implemented along with other optimizations 
