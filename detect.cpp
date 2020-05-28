@@ -21,47 +21,73 @@ int* getDestopSize()
 //mouse the mouse after the user declares where the origin is
 //moves the mouse smoother
 //todo this needs a lot of work
-void detect::moveMouse(float x, float y)
+void detect::moveMouse(float x, float y, float z)
 {
 	//std::cout << "previous value: " << pervious_values[0] << std::endl;
-	//std::cout << "Current Value: " << x << std::endl;
+	//std::cout << "Current Value: " << y << std::endl;
 	//std::cout << "X: " << abs(pervious_values[0] - x) << " Y: " << abs(pervious_values[1] - y) << std::endl;
-	//if difference is too small
+	float cal_x = abs(calibration[0]) + abs(calibration[1]);
+	float cal_y = abs(calibration[2]) + abs(calibration[3]);
+	float move_X;
+	float move_Y;
 
-	SetCursorPos(x*hor_scaler, y*vert_scaler);
-	//if (abs(pervious_values[0] - x) < 5 && abs(pervious_values[1] - y) < 5)
-	//{
-	//	SetCursorPos(x, y);
-	//}
-	//else
-	//{
-	//	SetCursorPos(x, y);
-	//	int interations = 5;
-	//	for (int i = 0; i < interations; i++)
-	//	{
-	//		//this math is very wrong fix this
-	//		//x1 start point
-	//		//x2 end point 
-	//		int xSet = (pervious_values[0]) + i * ((x) - (pervious_values[0]));
-	//		int ySet = (pervious_values[1]) + i * ((y) - (pervious_values[1]));
+	//determine which quadrant it is in for scalling purposes
+	// this adjusts the origin since the origin for the camera is middle screen
+	//while the origin for the screen cords is top left
+	if (x >= 0) move_X = ((cal_x / 2) - x) * hor_scaler;
+	else move_X = (cal_x / 2 + abs(x)) * hor_scaler;
+	if (y >= 0) move_Y = ((cal_y / 2) + y) * vert_scaler;
+	else move_Y = ((cal_y / 2) - abs(y)) * vert_scaler;
 
-	//		//std::cout << "X: " << xSet << " Y: " << ySet << std::endl;
-	//		SetCursorPos(abs(xSet), abs(ySet));
-	//		Sleep(1);
-	//	}
-
-	//}
-
+	//jitter control
+	//if the movement is too small --> do not move the mouse
+	float movement_x = abs(pervious_values[0]) - abs(x);
+	float movement_y = abs(pervious_values[1]) - abs(y);
 	
+	//adjust this for jitter control.
+	// larger the number the more choppy it is
+	int movement_Thresh = 2; 
+
+	//if there is not enough movement, do not place the cursor --> otherwise place the cursor
+	if (movement_x < movement_Thresh && movement_x > 0 - movement_Thresh && movement_y < movement_Thresh && movement_y > 0 - movement_Thresh)
+	{
+		//leave empty for now..
+	}
+	else
+	{
+		SetCursorPos(move_X, move_Y);
+	}
+
+	//check if the user wants to click
+	//comparison between the previous value and the current value of the z index
+	//to trigger a click needs to be greater than a static (for now) tolorence
+	int click_Tol = 50;
+	float ifClick =  abs(pervious_values[2]) - abs(z);
+	//std::cout << ifClick << std::endl;
+
+	//click
+	if (ifClick > click_Tol)
+	{
+		std::cout << "click IN" << std::endl;
+		mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0); //holding down
+	}
+
+	//release
+	else if (ifClick < 0 - click_Tol)
+	{
+		std::cout << "Click OUT" << std::endl;
+		mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0); // left up 
+	}
 }
+
 
 
 // todo: will be used to check the position of the hand
 void detect::UpdateData(k4abt_body_t selectedBody, uint64_t currentTimestampUsec)
 {
-    k4a_float3_t leftWristJoint = selectedBody.skeleton.joints[K4ABT_JOINT_WRIST_LEFT].position;
-    k4a_float3_t rightWristJoint = selectedBody.skeleton.joints[K4ABT_JOINT_WRIST_RIGHT].position;
-    k4a_float3_t headJoint = selectedBody.skeleton.joints[K4ABT_JOINT_HEAD].position;
+    k4a_float3_t leftWristJoint = selectedBody.skeleton.joints[K4ABT_JOINT_HAND_LEFT].position;
+    k4a_float3_t rightWristJoint = selectedBody.skeleton.joints[K4ABT_JOINT_HAND_RIGHT].position;
+    k4a_float3_t headJoint = selectedBody.skeleton.joints[K4ABT_JOINT_HEAD].position; //CHIN
 
     
 	// bool set to true when the gestiure is performed
@@ -161,12 +187,14 @@ void detect::UpdateData(k4abt_body_t selectedBody, uint64_t currentTimestampUsec
 				int* size = getDestopSize();
 				std::cout << "Width: " << size[0] << " Height: " << size[1] << std::endl;
 
-				//calculate our scallers
-				vert_scaler = (size[1]) / (abs(calibration[0]) + abs(calibration[1]));
-				hor_scaler = (size[0]) / (abs(calibration[2]) + abs(calibration[3])) ;
+				// Calculate our scallers
+				// Adjustable for headroom. dont want to max out our calibration
+				int headroom = 1.5; 
+				vert_scaler = (size[1]) / (abs(calibration[0]) + abs(calibration[1]))*headroom;
+				hor_scaler = (size[0]) / (abs(calibration[2]) + abs(calibration[3]))* headroom;
 				//getting screen size
 
-				printf("PLACE BOTH HANDS ABOVE HEAD TO BEGIN TRACKING\n");
+				printf("PLACE LEFT HAND ABOVE HEAD TO BEGIN TRACKING\n");
 				isAllCalibrated = true; 
 				inDormant = true; //waiting to start tracking
 			}
@@ -190,18 +218,17 @@ void detect::UpdateData(k4abt_body_t selectedBody, uint64_t currentTimestampUsec
 	}
 
 
-
-	
 	//tracking statement
 	if (isAllCalibrated == true && inCalibration == false && inDormant == false)
 	{
 
 		//hand tracking starts here
 		//x,y 
-		moveMouse(abs(rightWristJoint.xyz.x), abs(rightWristJoint.xyz.y)); //moves the mouse every iteration
+		moveMouse((rightWristJoint.xyz.x), (rightWristJoint.xyz.y), leftWristJoint.xyz.z); //moves the mouse every iteration
 		//printf("RUNNING\n");
 		pervious_values[0] = abs(rightWristJoint.xyz.x);
 		pervious_values[1] = abs(rightWristJoint.xyz.y);
+		pervious_values[2] = leftWristJoint.xyz.z;
 
 		//if currently tracking and if both hands are raised
 		if (bothHandsUp)
@@ -222,18 +249,14 @@ void detect::UpdateData(k4abt_body_t selectedBody, uint64_t currentTimestampUsec
 			m_previousTimestampBHU = microseconds::zero();
 			m_BHUtimeSpan = microseconds::zero();
 		}
-
-
-
-
 	}
 
 	//stop running 
 	//todo: having issues here. stops tracking immediatly after starting to track
 	//indorment = false meaning it is currently tracking
 
-
 ///////////////////////////////////////////////////////////////
+	//TIME KEEPING
 
 	else if (!leftHandRaised)
 	{
@@ -248,6 +271,6 @@ void detect::UpdateData(k4abt_body_t selectedBody, uint64_t currentTimestampUsec
 		m_bothHandsUp = false;
 		m_previousTimestampBHU = microseconds::zero();
 		m_BHUtimeSpan = microseconds::zero();
-	}
 
 }
+	}

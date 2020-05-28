@@ -10,7 +10,7 @@ class detect
 {
 public:
     void UpdateData(k4abt_body_t selectedBody, uint64_t currentTimestampUsec);
-	void moveMouse(float x, float y);
+	void moveMouse(float x, float y, float z);
     bool LeftHandRaised() 
 	{ 
 		return m_leftHandRaised;
@@ -19,7 +19,7 @@ public:
 private:
 	//left, right, top, down
 	float calibration[4] = {0,0,0,0};
-	float pervious_values[2] = { 0.0, 0.0};
+	float pervious_values[3] = { 0.0, 0.0, 0.0};
 	bool isLeftCalibrated = false;
 	bool isRightCalibrated = false;
 	bool isTopCalibrated = false;

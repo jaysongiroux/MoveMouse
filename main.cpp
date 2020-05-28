@@ -30,7 +30,7 @@ void printIns()
 
 int main()
 {
-	printIns();
+	//printIns();
 
     k4a_device_t device = nullptr;
     VERIFY(k4a_device_open(0, &device), "Open K4A Device failed!");
@@ -39,7 +39,7 @@ int main()
     k4a_device_configuration_t deviceConfig = K4A_DEVICE_CONFIG_INIT_DISABLE_ALL; //hardcoded at 30 fps
 
 	// wide view by default
-    deviceConfig.depth_mode = K4A_DEPTH_MODE_NFOV_2X2BINNED;
+    deviceConfig.depth_mode = K4A_DEPTH_MODE_WFOV_2X2BINNED;
     deviceConfig.color_resolution = K4A_COLOR_RESOLUTION_OFF; //was: K4A_COLOR_RESOLUTION_OFF 
     VERIFY(k4a_device_start_cameras(device, &deviceConfig), "Start K4A cameras failed!");
 
