@@ -40,6 +40,9 @@ Note: this will not run on Linux. for practice developing on Linux, I developed 
 - `sudo apt-get install qtcreator`
 - ` sudo apt install qt5-default`
 - `sudo apt-get install qt5-doc qtbase5-examples qtbase5-doc-html`
+- `sudo apt install qt5-default`
+- `make`
+- resource: https://vitux.com/compiling-your-first-qt-program-in-ubuntu/  
 
 ### Misc Info:
 Progress of this project is streamed via twitch.tv:
