@@ -35,6 +35,12 @@ Note: these specs are according to microsoft's documentation. This will be revis
 - GTX 1060
 - 8 core CPU
 
+### OS
+Note: this will not run on Linux. for practice developing on Linux, I developed the UI on Ubunutu. 
+- `sudo apt-get install qtcreator`
+- ` sudo apt install qt5-default`
+- `sudo apt-get install qt5-doc qtbase5-examples qtbase5-doc-html`
+
 ### Misc Info:
 Progress of this project is streamed via twitch.tv:
 https://www.twitch.tv/brokenbeamer
